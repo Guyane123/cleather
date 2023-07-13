@@ -80,21 +80,26 @@ const Calendar = ({ head }: { head: string }) => {
         0
     ).getDate();
 
-    const rowsDaysOfWeeks = days.map((el) => <th>{el}</th>);
+    const rowsDaysOfWeeks = days.map((el, k) => <th key={k}>{el}</th>);
     const rowsDaysOfMonths: Array<ReactNode> = [];
-    for (let i = 0; i < numberOfDays; i++) {
+    for (let i = 0; i <= numberOfDays; i++) {
         if (i / 7 == 1 || i / 7 == 2 || i / 7 == 3 || i / 7 == 4) {
-            rowsDaysOfMonths.push(<tr></tr>)
+            rowsDaysOfMonths.push(<tr key={i}></tr>)
             if (i == new Date().getDate()) {
-                rowsDaysOfMonths.push(<td className="today">{i}</td>);
-            } else {
-                rowsDaysOfMonths.push(<td>{i}</td>);
+                rowsDaysOfMonths.push(<td key={i} className="today">{i}</td>);
             }
-        }
-        if (i == new Date().getDate()) {
-            rowsDaysOfMonths.push(<td className="today">{i}</td>);
         } else {
-            rowsDaysOfMonths.push(<td>{i}</td>);
+                    if (i == new Date().getDate()) {
+            rowsDaysOfMonths.push(<td key={i} className="today">{i}</td>);
+        } else {
+            rowsDaysOfMonths.push(<td key={i}>{i}</td>);
+        }
+        }
+    }
+    const tableRow: ReactNode = []
+    for (let i = 0; i <= numberOfDays; i++) {
+        if (i / 7 == 1 || i / 7 == 2 || i / 7 == 3 || i / 7 == 4) { 
+            tableRow.push(<tr>{ rowsDaysOfMonths[i]}</tr>)
         }
     }
     // rowsDaysOfMonths.map((el: ReactNode, k: number) => {
@@ -111,7 +116,8 @@ const Calendar = ({ head }: { head: string }) => {
                     <tr>{rowsDaysOfWeeks}</tr>
                 </thead>
                 <tbody>
-                    {rowsDaysOfMonths}</tbody>
+                    {rowsDaysOfMonths}
+                </tbody>
             </table>
         </div>
     );
