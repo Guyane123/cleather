@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
 
-function useWeather() {
+
+
+
+/**
+ * Get the fetched info
+ * @date 7/13/2023 - 4:36:51 PM
+ *
+ * @param {string} url
+ * @returns {*}
+ */
+function useWeather(url: string) {
   const [weather, setWeather] = useState(null);
-  console.log("get weather")
 
 
   const fetchData = async () => {
-    const apiKey = "4339a532a86b4eb800539bc7d239a0ad";
-    const location = "Plouay";
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`;
     try {
       const response = await fetch(url);
       const weatherData = await response.json();
-      setWeather(weatherData.main);
+      setWeather(weatherData);
     } catch (error) {
       console.error("Error fetching weather data:", error);
     }

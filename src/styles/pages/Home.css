@@ -1,12 +1,17 @@
 .Panel1 {
-    margin-top: 100px;
     padding: 16px;
     background-color: #3F3F3F;
     display: flex;
-    width: 50%;
+    width: 90%;
+    height: auto;
     justify-content: space-between;
 }
-
+.Panel1-container {
+    margin-top: 200px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
 h2 {
     margin-bottom: 0px;
 }
@@ -24,9 +29,42 @@ h4 {
 .Weather {
     display: flex;
     justify-content: space-around;
+    align-items: center;
+    flex-direction: column;
 }
 
 .img {
     margin-top: 20px;
     font-size: 6em;
+}
+
+.weather-2 {
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+}
+.date-wrapper {
+    display: flex;
+    justify-content: space-between;
+    /* font-size: 1.5em; */
+    height: 240px;
+    margin-top: 100px;
+    padding: 16px;
+    background-color: #DDDD;
+    color: black;
+    display: flex;
+    width: 40%;
+    justify-content: space-between;
+}
+.date {
+    font-size: 1.5em;
+    text-align: end;
+    display: flex;
+    flex-direction: column;
+}
+.hours {
+    color: #4F4F4F;
+}
+.today {
+    background-color: yellow;
 }
