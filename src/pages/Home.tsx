@@ -1,28 +1,35 @@
 import useWeather from "../utils/useWeather";
-import weatherType from '../utils/types';
+import weatherType from "../utils/types";
 import "../styles/Pages/Home.css";
 import {
     ChangeEvent,
+    Dispatch,
+    FormEvent,
     ReactNode,
+    SetStateAction,
     createRef,
     useEffect,
     useState,
 } from "react";
 import React from "react";
 import fr from "../assets/fr.json";
-import { Dispatch, SetStateAction } from 'react';
+// import { Dispatch, SetStateAction } from 'react';
 
+// interface SearchBarType {
+//     onSearch: Dispatch<SetStateAction<weatherType>>,
+//     location: string,
+//     onLocationChange: Dispatch<SetStateAction<string>>,
+//     URL: string,
+//     onURLChange: Dispatch<SetStateAction<string>>,
+//     apiKey: string
+// }
 
-interface SearchBarType {
-    onSearch: Dispatch<SetStateAction<weatherType>>,
-    location: string,
-    onLocationChange: Dispatch<SetStateAction<string>>,
-    URL: string,
-    onURLChange: Dispatch<SetStateAction<string>>,
-    apiKey: string
-}
-
-const SearchBar = ({onSearch, location, onLocationChange, URL, onURLChange, apiKey}: SearchBarType) => {
+const SearchBar = ({
+    onSearch,
+}: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        onSearch: Dispatch<SetStateAction<any>>;
+}) => {
     const [suggestItems, setSuggestItems] = useState<ReactNode[]>([]);
     const [value, setValue] = useState("");
 
@@ -31,27 +38,18 @@ const SearchBar = ({onSearch, location, onLocationChange, URL, onURLChange, apiK
         suggestFunc();
     };
 
-    function search() {
-        onLocationChange(value)
-        onURLChange(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`)
-
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        onSearch(useWeather(URL))
-    }
-
     const cities: Array<string> = [];
     const suggest = createRef<HTMLDivElement>();
     const input = createRef<HTMLInputElement>();
     let element: string;
 
     window.addEventListener("click", () => {
-        if (input.current == document.activeElement) { 
+        if (input.current == document.activeElement) {
             suggest.current?.classList.remove("hidden");
         } else {
             suggest.current?.classList.add("hidden");
         }
-    })
-
+    });
 
     function suggestFunc() {
         if (input.current == document.activeElement) {
@@ -73,32 +71,47 @@ const SearchBar = ({onSearch, location, onLocationChange, URL, onURLChange, apiK
                     element = el.city;
                     cities.push(element);
                 });
-                
-                setSuggestItems(cities.slice(0,5));
+
+                setSuggestItems(cities.slice(0, 5));
             }
         }
     }
 
-    const handleClick = () => {
-        suggestFunc();
-    };
     const handleLiClick = (val: string) => {
-        setValue(val)
-        search()
-    }
+        setValue(val);
+    };
+
+    const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+        e.preventDefault()
+        // const URL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=4339a532a86b4eb800539bc7d239a0ad`
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        onSearch(value)
+    };
     return (
-        <div className="searchBar" onClick={handleClick}>
-            <input
-                ref={input}
-                type="text"
-                placeholder="search.."
-                onChange={handleChange}
-            />
-            <button onClick={search}>Click me !</button>
+        <div className="searchBar" onClick={suggestFunc}>
+            <form onSubmit={(e) => handleSubmit(e)} className="searchBar--wrapper">
+                <input
+                    value={value}
+                    ref={input}
+                    type="text"
+                    placeholder="search.."
+                    onChange={handleChange}
+                />
+                <button>Click me !</button>
+            </form>
             <div ref={suggest} className="suggest hidden">
                 <ul className="suggest-list">
                     {suggestItems.map((el, k) => {
-                        return <li onClick={() => handleLiClick(el? el.toString() : "")} key={k}>{el}</li>;
+                        return (
+                            <li
+                                onClick={() =>
+                                    handleLiClick(el ? el.toString() : "")
+                                }
+                                key={k}
+                            >
+                                {el}
+                            </li>
+                        );
                     })}
                 </ul>
             </div>
@@ -108,11 +121,6 @@ const SearchBar = ({onSearch, location, onLocationChange, URL, onURLChange, apiK
 
 const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
     console.log(weather);
-
-    const hours = new Date().getHours();
-    const betterHours = hours >= 12 ? hours - 12 : hours;
-    const minutes = new Date().getMinutes();
-
     console.log(new Date());
     return (
         <>
@@ -120,10 +128,10 @@ const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
                 <div>
                     <div>
                         <h2>Current Weather</h2>
-                        <h4>
-                            {betterHours}:
-                            {minutes >= 10 ? minutes : "0" + minutes}
-                            {hours >= 12 ? "PM" : "AM"}
+                        <h4>    
+                            {
+                                new Date().toLocaleTimeString("en-us", {minute:"2-digit", hour:"2-digit"})
+                            }
                         </h4>
                     </div>
                     <div className="Emoji">
@@ -136,7 +144,11 @@ const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
                         </span>
                     </div>
                     <h2>
-                        {weather ? weather.weather[0].description : "Cloudy"}
+                        {weather
+                            ? weather.weather[0].description +
+                              " " +
+                              weather.name
+                            : "Cloudy"}
                     </h2>
                 </div>
                 <div>
@@ -301,17 +313,24 @@ const Panel3 = ({ location }: { location: string }) => {
 };
 
 const Home = () => {
+
+    
+    const [location, setLocation] = useState("Paris");
     const apiKey = "4339a532a86b4eb800539bc7d239a0ad";
-    const [location, setLocation] = useState("Paris")
-    const [URL, setURL] = useState(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`)
-    const [weather, setWeather] = useState<weatherType>(useWeather(URL as string));
+    const URL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [weather, setWeather] = useState<any>(useWeather(URL))
+
+    const onSearch = (value:string) => {
+        setLocation(value)
+        setWeather(URL)
+    }
 
     if (weather) {
-        const weather2 = weather as weatherType;
-        const urlLogo = `https://openweathermap.org/img/wn/${weather2.weather[0].icon}@2x.png`;
+        const urlLogo = `https://openweathermap.org/img/wn/${weather.weather[0].logo}@2x.png`;
         return (
             <div className="Weather">
-                <SearchBar location={location} apiKey={apiKey} onLocationChange={setLocation} URL={URL} onURLChange={setURL} onSearch={ setWeather } />
+                <SearchBar onSearch={onSearch} />
                 <div className="Panel1-container">
                     <Panel1 weather={weather} logo={urlLogo} />
                 </div>
