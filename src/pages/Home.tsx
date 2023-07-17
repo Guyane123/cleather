@@ -1,9 +1,112 @@
 import useWeather from "../utils/useWeather";
+import weatherType from '../utils/types';
 import "../styles/Pages/Home.css";
-import { ReactNode } from "react";
+import {
+    ChangeEvent,
+    ReactNode,
+    createRef,
+    useEffect,
+    useState,
+} from "react";
 import React from "react";
+import fr from "../assets/fr.json";
+import { Dispatch, SetStateAction } from 'react';
 
-const Panel1 = ({ weather, logo }: { weather: any; logo: string }) => {
+
+interface SearchBarType {
+    onSearch: Dispatch<SetStateAction<weatherType>>,
+    location: string,
+    onLocationChange: Dispatch<SetStateAction<string>>,
+    URL: string,
+    onURLChange: Dispatch<SetStateAction<string>>,
+    apiKey: string
+}
+
+const SearchBar = ({onSearch, location, onLocationChange, URL, onURLChange, apiKey}: SearchBarType) => {
+    const [suggestItems, setSuggestItems] = useState<ReactNode[]>([]);
+    const [value, setValue] = useState("");
+
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        setValue(e.target.value);
+        suggestFunc();
+    };
+
+    function search() {
+        onLocationChange(value)
+        onURLChange(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`)
+
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        onSearch(useWeather(URL))
+    }
+
+    const cities: Array<string> = [];
+    const suggest = createRef<HTMLDivElement>();
+    const input = createRef<HTMLInputElement>();
+    let element: string;
+
+    window.addEventListener("click", () => {
+        if (input.current == document.activeElement) { 
+            suggest.current?.classList.remove("hidden");
+        } else {
+            suggest.current?.classList.add("hidden");
+        }
+    })
+
+
+    function suggestFunc() {
+        if (input.current == document.activeElement) {
+            // if (p.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
+            //     return;
+            // }
+            if (cities.length >= 5) {
+                for (let i = 0; i <= 5; i++) {
+                    cities.pop();
+                }
+            } else {
+                fr.filter((el) => {
+                    if (
+                        el.city.toLowerCase().indexOf(value.toLowerCase()) ===
+                        -1
+                    ) {
+                        return;
+                    }
+                    element = el.city;
+                    cities.push(element);
+                });
+                
+                setSuggestItems(cities.slice(0,5));
+            }
+        }
+    }
+
+    const handleClick = () => {
+        suggestFunc();
+    };
+    const handleLiClick = (val: string) => {
+        setValue(val)
+        search()
+    }
+    return (
+        <div className="searchBar" onClick={handleClick}>
+            <input
+                ref={input}
+                type="text"
+                placeholder="search.."
+                onChange={handleChange}
+            />
+            <button onClick={search}>Click me !</button>
+            <div ref={suggest} className="suggest hidden">
+                <ul className="suggest-list">
+                    {suggestItems.map((el, k) => {
+                        return <li onClick={() => handleLiClick(el? el.toString() : "")} key={k}>{el}</li>;
+                    })}
+                </ul>
+            </div>
+        </div>
+    );
+};
+
+const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
     console.log(weather);
 
     const hours = new Date().getHours();
@@ -60,20 +163,6 @@ const Panel1 = ({ weather, logo }: { weather: any; logo: string }) => {
 
 const Calendar = ({ head }: { head: string }) => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const months = [
-        "january",
-        "february",
-        "march",
-        "april",
-        "may",
-        "june",
-        "july",
-        "august",
-        "september",
-        "october",
-        "november",
-        "december",
-    ];
     const numberOfDays = new Date(
         new Date().getFullYear(),
         new Date().getMonth(),
@@ -81,32 +170,65 @@ const Calendar = ({ head }: { head: string }) => {
     ).getDate();
 
     const rowsDaysOfWeeks = days.map((el, k) => <th key={k}>{el}</th>);
-    const rowsDaysOfMonths: Array<ReactNode> = [];
-    for (let i = 0; i <= numberOfDays; i++) {
-        if (i / 7 == 1 || i / 7 == 2 || i / 7 == 3 || i / 7 == 4) {
-            rowsDaysOfMonths.push(<tr key={i}></tr>)
-            if (i == new Date().getDate()) {
-                rowsDaysOfMonths.push(<td key={i} className="today">{i}</td>);
-            }
-        } else {
-                    if (i == new Date().getDate()) {
-            rowsDaysOfMonths.push(<td key={i} className="today">{i}</td>);
-        } else {
-            rowsDaysOfMonths.push(<td key={i}>{i}</td>);
+
+    // TODO: Redo this dirty thing
+    const rowsDaysOfMonths1: Array<ReactNode> = [];
+    const rowsDaysOfMonths2: Array<ReactNode> = [];
+    const rowsDaysOfMonths3: Array<ReactNode> = [];
+    const rowsDaysOfMonths4: Array<ReactNode> = [];
+    const rowsDaysOfMonths5: Array<ReactNode> = [];
+    const DaysOfMonthsArray: Array<number> = [];
+
+    for (let index = 0; index <= numberOfDays; index++) {
+        DaysOfMonthsArray.push(index);
+    }
+    DaysOfMonthsArray.map((k) => {
+        if (k < 7) {
+            rowsDaysOfMonths1.push(
+                <td className={"k" + k.toString()} key={k}>
+                    {k}
+                </td>
+            );
+        } else if (k > 7 && k <= 14) {
+            rowsDaysOfMonths2.push(
+                <td className={"k" + k.toString()} key={k}>
+                    {k}
+                </td>
+            );
+        } else if (k > 14 && k <= 21) {
+            rowsDaysOfMonths3.push(
+                <td className={"k" + k.toString()} key={k}>
+                    {k}
+                </td>
+            );
+        } else if (k > 21 && k <= 28) {
+            rowsDaysOfMonths4.push(
+                <td className={"k" + k.toString()} key={k}>
+                    {k}
+                </td>
+            );
+        } else if (k > 28 && k <= 35) {
+            rowsDaysOfMonths5.push(
+                <td className={"k" + k.toString()} key={k}>
+                    {k}
+                </td>
+            );
         }
+    });
+
+    useEffect(() => {
+        ($(`.k${new Date().getDate()}`) as HTMLElement).style.backgroundColor =
+            "green";
+    }, []);
+    function $(el: string): HTMLElement | null {
+        const element = document.querySelector(`${el}`);
+        if (element) {
+            return document.querySelector(el) as HTMLElement;
+        } else {
+            throw new Error("Error, this element does not exist : " + el);
+            return null;
         }
     }
-    const tableRow: ReactNode = []
-    for (let i = 0; i <= numberOfDays; i++) {
-        if (i / 7 == 1 || i / 7 == 2 || i / 7 == 3 || i / 7 == 4) { 
-            tableRow.push(<tr>{ rowsDaysOfMonths[i]}</tr>)
-        }
-    }
-    // rowsDaysOfMonths.map((el: ReactNode, k: number) => {
-    //     if (k / 7 == 1 || k / 7 == 2 || k / 7 == 3 || k / 7 == 4) {
-    //         rowsDaysOfMonths
-    //     }
-    // })
 
     return (
         <div>
@@ -116,7 +238,11 @@ const Calendar = ({ head }: { head: string }) => {
                     <tr>{rowsDaysOfWeeks}</tr>
                 </thead>
                 <tbody>
-                    {rowsDaysOfMonths}
+                    <tr>{rowsDaysOfMonths1}</tr>
+                    <tr>{rowsDaysOfMonths2}</tr>
+                    <tr>{rowsDaysOfMonths3}</tr>
+                    <tr>{rowsDaysOfMonths4}</tr>
+                    <tr>{rowsDaysOfMonths5}</tr>
                 </tbody>
             </table>
         </div>
@@ -124,74 +250,13 @@ const Calendar = ({ head }: { head: string }) => {
 };
 
 class Panel2 extends React.Component<unknown, unknown> {
-    day: string | number;
     Date: Date;
     date: number;
-    month: number | string;
-    hours: number;
-    betterHours: any;
-    minutes: number;
 
     constructor(props: unknown) {
         super(props);
         this.Date = new Date();
-        this.day = this.getDayString();
         this.date = this.Date.getDate();
-        this.month = this.getMonthString();
-        this.hours = new Date().getHours();
-        this.betterHours = this.hours >= 12 ? this.hours - 12 : this.hours;
-        this.minutes = new Date().getMinutes();
-    }
-
-    getDayString(): string | number {
-        switch (this.Date.getDay()) {
-            case 1:
-                return "Monday";
-            case 2:
-                return "Tuesday";
-            case 3:
-                return "Wednesday";
-            case 4:
-                return "Thursday";
-            case 5:
-                return "Friday";
-            case 6:
-                return "Saturday";
-            case 7:
-                return "Sunday";
-            default:
-                return this.day;
-        }
-    }
-    getMonthString(): string | number {
-        switch (this.Date.getMonth()) {
-            case 1:
-                return "January";
-            case 2:
-                return "February";
-            case 3:
-                return "March";
-            case 4:
-                return "April";
-            case 5:
-                return "May";
-            case 6:
-                return "June";
-            case 7:
-                return "July";
-            case 8:
-                return "August";
-            case 9:
-                return "September";
-            case 10:
-                return "October";
-            case 11:
-                return "November";
-            case 12:
-                return "December";
-            default:
-                return this.Date.getMonth();
-        }
     }
 
     render(): ReactNode {
@@ -199,20 +264,25 @@ class Panel2 extends React.Component<unknown, unknown> {
             <div className="date-wrapper">
                 <div className="calendar">
                     <Calendar
-                        head={`${this.month} ${this.Date.getFullYear()}`}
+                        head={`${this.Date.toLocaleDateString("en-us", {
+                            month: "long",
+                        })} ${this.Date.getFullYear()}`}
                     />
                 </div>
                 <div className="date">
                     <span>
-                        {this.day + " "}
-                        {this.date + " "}
-                        {this.month + " "}
-                        {this.Date.getFullYear() + " "}
+                        {this.Date.toLocaleDateString("en-us", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                        })}
                     </span>
                     <span className="hours">
-                        {this.betterHours}:
-                        {this.minutes >= 10 ? this.minutes : "0" + this.minutes}
-                        {this.hours >= 12 ? "PM" : "AM"}
+                        {this.Date.toLocaleTimeString("en-us", {
+                            minute: "2-digit",
+                            hour: "2-digit",
+                        })}
                     </span>
                 </div>
             </div>
@@ -220,23 +290,34 @@ class Panel2 extends React.Component<unknown, unknown> {
     }
 }
 
+const Panel3 = ({ location }: { location: string }) => {
+    return (
+        <div className="location">
+            <iframe
+                src={`https://www.google.com/maps/embed/v1/place?q=${location}&key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8`}
+            ></iframe>
+        </div>
+    );
+};
+
 const Home = () => {
     const apiKey = "4339a532a86b4eb800539bc7d239a0ad";
-    const location = "Plouay";
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`;
-    const weather: any = useWeather(url);
-    // console.log(weather.weather[0].icon)
-    if (weather) {
-        const urlLogo = `https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`;
+    const [location, setLocation] = useState("Paris")
+    const [URL, setURL] = useState(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`)
+    const [weather, setWeather] = useState<weatherType>(useWeather(URL as string));
 
+    if (weather) {
+        const weather2 = weather as weatherType;
+        const urlLogo = `https://openweathermap.org/img/wn/${weather2.weather[0].icon}@2x.png`;
         return (
             <div className="Weather">
+                <SearchBar location={location} apiKey={apiKey} onLocationChange={setLocation} URL={URL} onURLChange={setURL} onSearch={ setWeather } />
                 <div className="Panel1-container">
                     <Panel1 weather={weather} logo={urlLogo} />
                 </div>
                 <div className="weather-2">
                     <Panel2 />
-                    <Panel2 />
+                    <Panel3 location={location} />
                 </div>
             </div>
         );

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
+import weatherType from "./types";
 
 
 
@@ -10,8 +11,8 @@ import { useState, useEffect } from "react";
  * @param {string} url
  * @returns {*}
  */
-function useWeather(url: string) {
-  const [weather, setWeather] = useState(null);
+function useWeather(url: string): weatherType {
+  const [weather, setWeather] = useState<weatherType>();
 
 
   const fetchData = async () => {
@@ -23,12 +24,11 @@ function useWeather(url: string) {
       console.error("Error fetching weather data:", error);
     }
   };
-
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [])
 
-  return weather;
+  return weather as weatherType;
 }
 
 export default useWeather;
