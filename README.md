@@ -1,5 +1,8 @@
 # Cleather 🌦️
 
+![image](https://github.com/Guyane123/cleather/assets/69190311/a8189966-9b4b-42a0-9358-8cb69e4d8efb)
+
+
 Cleather permet de consulter la météo et la température d'une ville
 ## Fonctionnalités ⚙️
 
