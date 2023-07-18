@@ -11,7 +11,7 @@ import weatherType from './types';
  * @param {string} url
  * @returns {*}
  */
-function useWeather(url: string): { weather: weatherType} {
+function useWeather(url: string): weatherType {
   const [weather, setWeather] = useState<weatherType>();
 
 
@@ -26,7 +26,7 @@ function useWeather(url: string): { weather: weatherType} {
   };
   fetchData();
 
-  return { weather } as {weather: weatherType}
+  return weather as weatherType
 }
 
 export default useWeather;

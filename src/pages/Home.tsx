@@ -1,35 +1,56 @@
-import useWeather from "../utils/useWeather";
 import weatherType from "../utils/types";
 import "../styles/Pages/Home.css";
 import {
     ChangeEvent,
-    Dispatch,
     FormEvent,
     ReactNode,
-    SetStateAction,
+    Suspense,
     createRef,
     useEffect,
     useState,
 } from "react";
 import React from "react";
-import fr from "../assets/fr.json";
-// import { Dispatch, SetStateAction } from 'react';
+import franceCity from "../assets/fr.json";
+function $(el: string): HTMLElement | null {
+    const element = document.querySelector(`${el}`);
+    if (element) {
+        return document.querySelector(el) as HTMLElement;
+    } else {
+        throw new Error("Error, this element does not exist : " + el);
+        return null;
+    }
+}
 
-// interface SearchBarType {
-//     onSearch: Dispatch<SetStateAction<weatherType>>,
-//     location: string,
-//     onLocationChange: Dispatch<SetStateAction<string>>,
-//     URL: string,
-//     onURLChange: Dispatch<SetStateAction<string>>,
-//     apiKey: string
-// }
+interface city {
+    city: string;
+}
+const france = franceCity as Array<city>;
 
-const SearchBar = ({
-    onSearch,
-}: {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onSearch: Dispatch<SetStateAction<any>>;
-}) => {
+const capitalize = (val: string) => {
+    const chars = val.split("")
+
+    const newArr = chars.map((el, k) => {
+        if (el === " ") {
+            console.log(el)
+            return '-';
+        }
+        if (k == 0) {
+            return el.toUpperCase()
+        }
+        if (chars[k - 1] == " ") {
+            return el.toUpperCase()
+        }
+        return el
+    })
+
+
+    return newArr.join("");
+};
+
+const SearchBar = ({ onSearch }: { onSearch: (value: string) => void }) => {
+
+    const searchBar = createRef<HTMLDivElement>()
+
     const [suggestItems, setSuggestItems] = useState<ReactNode[]>([]);
     const [value, setValue] = useState("");
 
@@ -43,25 +64,31 @@ const SearchBar = ({
     const input = createRef<HTMLInputElement>();
     let element: string;
 
-    window.addEventListener("click", () => {
-        if (input.current == document.activeElement) {
-            suggest.current?.classList.remove("hidden");
-        } else {
-            suggest.current?.classList.add("hidden");
+    function handleWindowClick() {
+            if (input.current == document.activeElement) {
+                suggest.current?.classList.remove("hidden");
+            } else {
+                suggest.current?.classList.add("hidden");
+            }
+    }
+
+    useEffect(() => {
+        window.addEventListener("click", handleWindowClick)
+
+        return () => {
+            window.removeEventListener("click", handleWindowClick)
         }
-    });
+    })
+
 
     function suggestFunc() {
         if (input.current == document.activeElement) {
-            // if (p.name.toLowerCase().indexOf(filterText.toLowerCase()) === -1) {
-            //     return;
-            // }
             if (cities.length >= 5) {
                 for (let i = 0; i <= 5; i++) {
                     cities.pop();
                 }
             } else {
-                fr.filter((el) => {
+                france.filter((el) => {
                     if (
                         el.city.toLowerCase().indexOf(value.toLowerCase()) ===
                         -1
@@ -79,17 +106,18 @@ const SearchBar = ({
 
     const handleLiClick = (val: string) => {
         setValue(val);
+        onSearch(val);
     };
 
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        // const URL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=4339a532a86b4eb800539bc7d239a0ad`
-        // eslint-disable-next-line react-hooks/rules-of-hooks
-        onSearch(value)
+        e.preventDefault();
     };
     return (
-        <div className="searchBar" onClick={suggestFunc}>
-            <form onSubmit={(e) => handleSubmit(e)} className="searchBar--wrapper">
+        <div className="searchBar" onClick={suggestFunc} ref={searchBar}>
+            <form onSubmit={handleSubmit} className="searchBar--wrapper">
+                <button onClick={() => onSearch(value)}>
+                    <span className="material-symbols-outlined">search</span>
+                </button>
                 <input
                     value={value}
                     ref={input}
@@ -97,10 +125,13 @@ const SearchBar = ({
                     placeholder="search.."
                     onChange={handleChange}
                 />
-                <button>Click me !</button>
+                <button onClick={() => setValue("")}>
+                    <span className="material-symbols-outlined">close</span>
+                </button>
             </form>
             <div ref={suggest} className="suggest hidden">
                 <ul className="suggest-list">
+                    <hr />
                     {suggestItems.map((el, k) => {
                         return (
                             <li
@@ -109,6 +140,9 @@ const SearchBar = ({
                                 }
                                 key={k}
                             >
+                                <span className="material-symbols-outlined">
+                                    search
+                                </span>
                                 {el}
                             </li>
                         );
@@ -119,7 +153,13 @@ const SearchBar = ({
     );
 };
 
-const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
+const Panel1 = ({
+    weather,
+    logo,
+}: {
+    weather: weatherType | null;
+    logo: string;
+}) => {
     console.log(weather);
     console.log(new Date());
     return (
@@ -128,43 +168,62 @@ const Panel1 = ({ weather, logo }: { weather: weatherType; logo: string }) => {
                 <div>
                     <div>
                         <h2>Current Weather</h2>
-                        <h4>    
-                            {
-                                new Date().toLocaleTimeString("en-us", {minute:"2-digit", hour:"2-digit"})
-                            }
+                        <h4>
+                            {new Date().toLocaleTimeString("en-us", {
+                                minute: "2-digit",
+                                hour: "2-digit",
+                            })}
                         </h4>
                     </div>
                     <div className="Emoji">
                         <img src={logo} alt="Current weather logo" />
                         <span>
                             <span className="temp">
-                                {weather ? weather.main.temp : "20"}°
+                                {weather
+                                    ? weather.main != undefined
+                                        ? weather.main.temp
+                                        : "Lorem Ipsum"
+                                    : "Lorem Ipsum"}
+                                °
                             </span>
                             <span>C</span>
                         </span>
                     </div>
                     <h2>
-                        {weather
-                            ? weather.weather[0].description +
-                              " " +
-                              weather.name
-                            : "Cloudy"}
+                        { weather ? weather.weather != undefined ? weather.weather[0].description + " in " + weather.name : "Lorem Ipsum" : "Lorem Ipsum"}
                     </h2>
                 </div>
                 <div>
                     <h2>
                         Feels like{" "}
                         <span>
-                            {weather ? weather.main.feels_like : "20"}°C
+                            {weather
+                                ? weather.main != undefined
+                                    ? weather.main.feels_like
+                                    : "Lorem Ipsum"
+                                : "Lorem Ipsum"}
+                            °C
                         </span>
                     </h2>
                     <hr />
                     <h2>
-                        Wind {weather ? weather.wind.speed + "km/h" : "20km/h"}
+                        Wind{" "}
+                        {weather
+                            ? weather.wind != undefined
+                                ? weather.wind.speed
+                                : "Lorem Ipsum"
+                            : "Lorem Ipsum"}
+                        km/h
                     </h2>
                     <hr />
                     <h2>
-                        Humidity {weather ? weather.main.humidity + "%" : "50%"}
+                        Humidity{" "}
+                        {weather
+                            ? weather.main != undefined
+                                ? weather.main.humidity
+                                : "Lorem Ipsum"
+                            : "Lorem Ipsum"}
+                        %
                     </h2>
                     <hr />
                 </div>
@@ -232,15 +291,6 @@ const Calendar = ({ head }: { head: string }) => {
         ($(`.k${new Date().getDate()}`) as HTMLElement).style.backgroundColor =
             "green";
     }, []);
-    function $(el: string): HTMLElement | null {
-        const element = document.querySelector(`${el}`);
-        if (element) {
-            return document.querySelector(el) as HTMLElement;
-        } else {
-            throw new Error("Error, this element does not exist : " + el);
-            return null;
-        }
-    }
 
     return (
         <div>
@@ -312,37 +362,67 @@ const Panel3 = ({ location }: { location: string }) => {
     );
 };
 
-const Home = () => {
+function Fallback() {
+    return <div>Wainting...</div>;
+}
 
-    
+const Home = () => {
     const [location, setLocation] = useState("Paris");
     const apiKey = "4339a532a86b4eb800539bc7d239a0ad";
-    const URL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [weather, setWeather] = useState<any>(useWeather(URL))
+    const [URL, setURL] = useState(
+        `https://api.openweathermap.org/data/2.5/weather?q=${location}&units=metric&appid=${apiKey}`
+    );
+    const [currentWeather, setWeather] = useState<weatherType | null>(null);
 
-    const onSearch = (value:string) => {
-        setLocation(value)
-        setWeather(URL)
+    useEffect(() => {
+        console.log(URL);
+        const fetchData = async () => {
+            try {
+                const response = await fetch(URL);
+                const data = await response.json();
+                setWeather(data);
+            } catch (error) {
+                console.error("Error fetching weather data:", error);
+                setWeather(null);
+            }
+        };
+
+        fetchData();
+    }, [URL]);
+
+    function onSearch(value: string) {
+        setLocation(value);
+        setURL(
+            `https://api.openweathermap.org/data/2.5/weather?q=${value}&units=metric&appid=${apiKey}`
+        );
     }
 
-    if (weather) {
-        const urlLogo = `https://openweathermap.org/img/wn/${weather.weather[0].logo}@2x.png`;
-        return (
+    const urlLogo = `https://openweathermap.org/img/wn/${
+        currentWeather == null
+            ? "02d"
+            : Array.isArray(currentWeather.weather)
+            ? currentWeather.weather.length == 0
+                ? currentWeather.weather[0].icon
+                : "02d"
+            : "02d"
+    }@2x.png`;
+    return (
+        <Suspense fallback={<Fallback />}>
             <div className="Weather">
                 <SearchBar onSearch={onSearch} />
                 <div className="Panel1-container">
-                    <Panel1 weather={weather} logo={urlLogo} />
+                    <Panel1
+                        weather={currentWeather ? currentWeather : null}
+                        logo={urlLogo}
+                    />
                 </div>
                 <div className="weather-2">
                     <Panel2 />
                     <Panel3 location={location} />
                 </div>
             </div>
-        );
-    } else {
-        <h2>Recherche....</h2>;
-    }
+        </Suspense>
+    );
 };
 
 export default Home;
